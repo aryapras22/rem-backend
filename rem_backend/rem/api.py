@@ -6,6 +6,8 @@ from rem.scrapper import (
     googleplay_scraper,
     x_twitter_scraper,
 )
+import datetime
+import uuid
 
 api = NinjaAPI()
 
@@ -20,15 +22,69 @@ def get_queries(request):
     return serialized_data
 
 
+@api.post("add_query/")
+def add_query(request, q: str):
+    _id = str(uuid.uuid4())
+    query_collection.insert_one(
+        {
+            "_id": _id,
+            "query": q,
+            "timestamp": datetime.datetime.now(),
+        }
+    )
+    return _id
+
+
 @api.get("get_data/")
-def get_data(request, q: str, type: str):
+def get_data(request, q: str, type: str, id: str):
     if type == "news":
-        return news_scraper(q)
+        newsData = news_scraper(q)
+        query_collection.update_one(
+            {"_id": id},
+            {
+                "$set": {
+                    "sources.news": newsData,
+                },
+            },
+        )
+        return newsData
     elif type == "appstore":
-        return appstore_scraper(q)
-    elif type == "googleplay":
-        return googleplay_scraper(q)
+        appstoreData = appstore_scraper(q)
+        query_collection.update_one(
+            {"_id": id},
+            {
+                "$set": {
+                    "sources.appstore": appstoreData,
+                },
+            },
+        )
+        return appstoreData
+    elif type == "playstore":
+        playstoreData = googleplay_scraper(q)
+        query_collection.update_one(
+            {"_id": id},
+            {
+                "$set": {
+                    "sources.playstore": playstoreData,
+                },
+            },
+        )
+        return playstoreData
     elif type == "xtwitter":
-        return x_twitter_scraper(q)
+        xtwitterData = x_twitter_scraper(q)
+        query_collection.update_one(
+            {"_id": id},
+            {
+                "$set": {
+                    "sources.xtwitter": xtwitterData,
+                },
+            },
+        )
+        return xtwitterData
     else:
         return {"error": "Invalid scraper type"}
+
+
+@api.get("preprocessing/")
+def preprocessing(request, id: str):
+    return {"error": "Not implemented yet"}

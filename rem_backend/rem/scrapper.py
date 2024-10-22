@@ -1,11 +1,10 @@
 from rem_backend.settings import NEWS_API_KEY
-from django.http import HttpRequest
 import requests
 from app_store_scraper import AppStore
-from google_play_scraper import app, Sort, reviews, search
+from google_play_scraper import Sort, reviews, search
 from ntscraper import Nitter
-from langdetect import detect
 import re
+
 
 
 def appstore_scraper(query, country="us", limit=10):
@@ -31,8 +30,15 @@ def appstore_scraper(query, country="us", limit=10):
                 country=country, app_name=app["app_name"], app_id=app["app_id"]
             )
             review.review(how_many=limit)
-            reviews.append(review.reviews)
-            return reviews
+            reviews.append(
+                {
+                    "app_name": app["app_name"],
+                    "app_id": app["app_id"],
+                    "reviews": review.reviews,
+                }
+            )
+
+        return reviews
 
     else:
         return {
@@ -41,14 +47,51 @@ def appstore_scraper(query, country="us", limit=10):
 
 
 def googleplay_scraper(query, limit=10):
-    # apps = search(query, n_hits=5)
-    # reviews = []
-    # for app in apps:
-    #     app_id = app["appId"]
-    #     review = reviews(app_id, lang="en", count=limit, sort=Sort.NEWEST)
-    #     reviews.append(review)
-    # return reviews
-    pass
+
+    # remove spaces from query
+    query = re.sub(r"\s+", "", query)
+
+    apps = search(query, n_hits=10)
+
+    # Initializing a list to store the output in JSON format
+    output_data = []
+
+    # Fetching search results and reviews
+    for i, app_info in enumerate(apps):
+        # Creating a dictionary for app details
+        app_details = {
+            "App Name": app_info["title"],
+            "App ID": app_info["appId"],
+            "Developer": app_info["developer"],
+            "Rating Score": app_info["score"],
+        }
+
+        # Scraping reviews based on appId
+        app_id = app_info["appId"]
+
+        try:
+            result, _ = reviews(app_id, lang="en", sort=Sort.NEWEST, count=10)
+
+            # Collecting reviews data
+            reviews_data = []
+            if result:
+                for review in result:
+                    reviews_data.append(
+                        {
+                            "Reviewer": review["userName"],
+                            "Rating": review["score"],
+                            "Review": review["content"],
+                        }
+                    )
+
+            # Adding app details and reviews to output data
+            output_data.append({"App Details": app_details, "Reviews": reviews_data})
+
+        except Exception as e:
+            print(
+                f"Failed to retrieve reviews for app '{app_info['title']}' with ID {app_id}. Error: {str(e)}"
+            )
+    return output_data
 
 
 def news_scraper(query, limit=10):
@@ -60,7 +103,8 @@ def news_scraper(query, limit=10):
     response = requests.get(url)
     return response.json()
 
-scraper = Nitter()
 
 def x_twitter_scraper(query, limit=10):
-    pass
+    scraper = Nitter()
+    tweets = scraper.get_user_tweets(query, limit)
+    return tweets
