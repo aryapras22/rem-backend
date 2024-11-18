@@ -1,10 +1,12 @@
-from rem_backend.settings import NEWS_API_KEY
+from rem_backend.settings import NEWS_CATCHER_API_KEY
 import requests
 from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews, search
 from ntscraper import Nitter
 import re
+from newscatcherapi import NewsCatcherApiClient
 
+newscatcherapi = NewsCatcherApiClient(x_api_key=NEWS_CATCHER_API_KEY)
 
 
 def appstore_scraper(query, country="us", limit=10):
@@ -49,7 +51,7 @@ def appstore_scraper(query, country="us", limit=10):
 def googleplay_scraper(query, limit=10):
 
     # remove spaces from query
-    query = re.sub(r"\s+", "", query)
+    query = re.sub(r"\s+", " ", query)
 
     apps = search(query, n_hits=10)
 
@@ -91,17 +93,33 @@ def googleplay_scraper(query, limit=10):
             print(
                 f"Failed to retrieve reviews for app '{app_info['title']}' with ID {app_id}. Error: {str(e)}"
             )
+
+    if len(output_data) == 0:
+        return {
+            "error": "Failed to retrieve data. No reviews found for the given query."
+        }
     return output_data
 
 
 def news_scraper(query, limit=10):
-    url = (
-        "https://newsapi.org/v2/top-headlines?category=technology&language=en&"
-        f"q={query}&"
-        f"apiKey={NEWS_API_KEY}"
+    q = f"{query} + 'apps'"
+    lang = "en"
+    topic = "tech"
+
+    # f = "lang=en&sortBy=relevancy"
+    # url = "https://newsapi.org/v2/everything?" f"q={q}&{f}" f"&apiKey={NEWS_API_KEY}"
+    # print(url)
+    # response = requests.get(url)
+    # return response.json()
+    all_articles = newscatcherapi.get_search(
+        q=q,
+        lang=lang,
+        sort_by="relevancy",
+        page=1,
+        page_size=20,
     )
-    response = requests.get(url)
-    return response.json()
+
+    return all_articles
 
 
 def x_twitter_scraper(query, limit=10):

@@ -8,6 +8,7 @@ from rem.scrapper import (
 )
 import datetime
 import uuid
+from rem.preprocessing import preprocess
 
 api = NinjaAPI()
 
@@ -87,4 +88,4 @@ def get_data(request, q: str, type: str, id: str):
 
 @api.get("preprocessing/")
 def preprocessing(request, id: str):
-    return {"error": "Not implemented yet"}
+    return preprocess(id)

@@ -133,6 +133,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", default="")
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY", default="")
+NEWS_CATCHER_API_KEY = os.getenv("NEWS_CATCHER_API_KEY", default="")
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
