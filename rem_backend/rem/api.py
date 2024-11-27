@@ -9,6 +9,8 @@ from rem.scrapper import (
 import datetime
 import uuid
 from rem.preprocessing import preprocess
+from rem.spacy import extract_goals
+
 
 api = NinjaAPI()
 
@@ -88,4 +90,25 @@ def get_data(request, q: str, type: str, id: str):
 
 @api.get("preprocessing/")
 def preprocessing(request, id: str):
-    return preprocess(id)
+    data = preprocess(id)
+    query_collection.update_one(
+        {"_id": id},
+        {
+            "$set": {
+                "preprocessed_data": data,
+            },
+        },
+    )
+    return data
+
+@api.get("user_story/")
+def user_story(request, id:str):
+    goals = extract_goals(id)
+    query_collection.update_one(
+        {"_id": id}, 
+        {
+            "$set": {
+                "userstories": goals
+            },
+        })
+    return goals

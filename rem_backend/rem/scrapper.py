@@ -2,7 +2,6 @@ from rem_backend.settings import NEWS_CATCHER_API_KEY
 import requests
 from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews, search
-from ntscraper import Nitter
 import re
 from newscatcherapi import NewsCatcherApiClient
 
@@ -123,6 +122,5 @@ def news_scraper(query, limit=10):
 
 
 def x_twitter_scraper(query, limit=10):
-    scraper = Nitter()
-    tweets = scraper.get_user_tweets(query, limit)
+    tweets =  'Not implemented yet'
     return tweets
