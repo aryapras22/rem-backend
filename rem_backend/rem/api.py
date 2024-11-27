@@ -10,6 +10,8 @@ import datetime
 import uuid
 from rem.preprocessing import preprocess
 from rem.spacy import extract_goals
+from rem.userstories import createUserStories
+from rem.usecase import createUseCaseDiagram
 
 
 api = NinjaAPI()
@@ -50,7 +52,7 @@ def get_data(request, q: str, type: str, id: str):
                 },
             },
         )
-        return newsData
+        return query_collection.find_one({"_id": id}).get("sources", {}).get("news", [])
     elif type == "appstore":
         appstoreData = appstore_scraper(q)
         query_collection.update_one(
@@ -61,7 +63,7 @@ def get_data(request, q: str, type: str, id: str):
                 },
             },
         )
-        return appstoreData
+        return query_collection.find_one({"_id": id}).get("sources", {}).get("appstore", [])
     elif type == "playstore":
         playstoreData = googleplay_scraper(q)
         query_collection.update_one(
@@ -72,7 +74,7 @@ def get_data(request, q: str, type: str, id: str):
                 },
             },
         )
-        return playstoreData
+        return query_collection.find_one({"_id": id}).get("sources", {}).get("playstore", [])
     elif type == "xtwitter":
         xtwitterData = x_twitter_scraper(q)
         query_collection.update_one(
@@ -83,7 +85,7 @@ def get_data(request, q: str, type: str, id: str):
                 },
             },
         )
-        return xtwitterData
+        return query_collection.find_one({"_id": id}).get("sources", {}).get("xtwitter", [])
     else:
         return {"error": "Invalid scraper type"}
 
@@ -99,16 +101,20 @@ def preprocessing(request, id: str):
             },
         },
     )
-    return data
+    return query_collection.find_one({"_id": id}).get("preprocessed_data", {})
 
 @api.get("user_story/")
 def user_story(request, id:str):
-    goals = extract_goals(id)
-    query_collection.update_one(
-        {"_id": id}, 
-        {
-            "$set": {
-                "userstories": goals
-            },
-        })
-    return goals
+    extract_goals(id)
+    return query_collection.find_one({"_id": id}).get("user_stories", {})
+
+@api.get("getstories/")
+def get_stories(request, id:str):
+    createUserStories(id)
+    return query_collection.find_one({"_id": id}).get("stories", {})
+
+@api.get("usecase/")
+def get_usecase(request, id:str):
+    data = createUseCaseDiagram(id)
+    query_collection.update_one({"_id": id}, {"$set": {"usecases": data}})
+    return query_collection.find_one({"_id": id}).get("usecases", {})

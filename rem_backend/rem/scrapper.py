@@ -100,22 +100,15 @@ def googleplay_scraper(query, limit=10):
     return output_data
 
 
-def news_scraper(query, limit=10):
+def news_scraper(query, limit=3):
     q = f"{query} + 'apps'"
     lang = "en"
-    topic = "tech"
-
-    # f = "lang=en&sortBy=relevancy"
-    # url = "https://newsapi.org/v2/everything?" f"q={q}&{f}" f"&apiKey={NEWS_API_KEY}"
-    # print(url)
-    # response = requests.get(url)
-    # return response.json()
     all_articles = newscatcherapi.get_search(
         q=q,
         lang=lang,
         sort_by="relevancy",
         page=1,
-        page_size=20,
+        page_size=limit,
     )
 
     return all_articles

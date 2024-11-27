@@ -132,6 +132,12 @@ def clean_app_review(text):
         "",
         text,
     )
+    
+    # change your to my
+    text = re.sub(r"\byour\b", "my", text)
+    
+    # remove 'delete' and 'remove' words
+    text = re.sub(r"\b(delete|remove)\b", "", text)
     # Remove generic ratings-related comments
     text = re.sub(
         r"(?i)\b(5 stars|4 stars|1 star|rate this app|recommend this app|like this app|hate this app)\b.*",
